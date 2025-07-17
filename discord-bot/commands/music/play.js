@@ -84,6 +84,7 @@ module.exports = {
         songInfo = searchResults[0];
         videoUrl = songInfo.url;
       } else {
+        // It's a valid YouTube URL, get video info
         songInfo = await play.video_info(query);
         videoUrl = query;
       }
@@ -102,7 +103,7 @@ module.exports = {
         title: songInfo.title || songInfo.video_details?.title,
         url: videoUrl,
         duration: formatDuration(songInfo.durationInSec || songInfo.video_details?.lengthSeconds || 0),
-        thumbnail: songInfo.thumbnails?.[0]?.url || songInfo.video_details?.thumbnails?.[0]?.url || 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
+        thumbnail: songInfo.thumbnails?.[0]?.url || songInfo.video_details?.thumbnails?.[songInfo.video_details?.thumbnails?.length - 1]?.url || 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
         requestedBy: message.author
       };
       
