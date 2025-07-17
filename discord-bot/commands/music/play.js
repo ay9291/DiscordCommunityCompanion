@@ -1,6 +1,7 @@
+
 const { EmbedBuilder, PermissionsBitField } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
-const ytdl = require('ytdl-core');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus, StreamType } = require('@discordjs/voice');
+const play = require('play-dl');
 
 module.exports = {
   name: 'play',
@@ -63,27 +64,27 @@ module.exports = {
       let videoUrl = query;
       
       // Check if it's a YouTube URL
-      if (!ytdl.validateURL(query)) {
+      if (!play.yt_validate(query)) {
         // Search for the song on YouTube
-        const searchResults = await ytdl.getInfo(`ytsearch:${query}`).catch(() => null);
-        if (!searchResults) {
-          // If search fails, try with a basic YouTube search URL
-          videoUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-          // For demo, we'll use a placeholder
-          songInfo = {
-            videoDetails: {
-              title: query,
-              lengthSeconds: 222,
-              thumbnails: [{ url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg' }],
-              video_url: 'https://youtube.com/watch?v=dQw4w9WgXcQ'
-            }
-          };
-        } else {
-          songInfo = searchResults;
-          videoUrl = songInfo.videoDetails.video_url;
+        const searchResults = await play.search(query, {
+          limit: 1,
+          source: { youtube: 'video' }
+        });
+        
+        if (!searchResults || searchResults.length === 0) {
+          const errorEmbed = new EmbedBuilder()
+            .setColor('#ff6b6b')
+            .setTitle('❌ Song Not Found')
+            .setDescription('Could not find the requested song. Please try a different search term.')
+            .setTimestamp();
+          
+          return searchMessage.edit({ embeds: [errorEmbed] });
         }
+        
+        songInfo = searchResults[0];
+        videoUrl = songInfo.url;
       } else {
-        songInfo = await ytdl.getInfo(query);
+        songInfo = await play.video_info(query);
         videoUrl = query;
       }
       
@@ -98,10 +99,10 @@ module.exports = {
       }
       
       const song = {
-        title: songInfo.videoDetails.title,
+        title: songInfo.title || songInfo.video_details?.title,
         url: videoUrl,
-        duration: formatDuration(songInfo.videoDetails.lengthSeconds),
-        thumbnail: songInfo.videoDetails.thumbnails[songInfo.videoDetails.thumbnails.length - 1]?.url || 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
+        duration: formatDuration(songInfo.durationInSec || songInfo.video_details?.lengthSeconds || 0),
+        thumbnail: songInfo.thumbnails?.[0]?.url || songInfo.video_details?.thumbnails?.[0]?.url || 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
         requestedBy: message.author
       };
       
@@ -212,15 +213,13 @@ async function playMusic(guild, song) {
   }
   
   try {
-    // Create audio stream from YouTube
-    const stream = ytdl(song.url, {
-      filter: 'audioonly',
-      quality: 'highestaudio',
-      highWaterMark: 1 << 25
+    // Create audio stream using play-dl
+    const stream = await play.stream(song.url, {
+      quality: 2 // High quality
     });
     
-    const resource = createAudioResource(stream, {
-      inputType: 'arbitrary',
+    const resource = createAudioResource(stream.stream, {
+      inputType: stream.type,
       inlineVolume: true
     });
     
