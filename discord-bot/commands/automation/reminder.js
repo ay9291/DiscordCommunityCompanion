@@ -96,3 +96,59 @@ module.exports = {
     }, delay);
   }
 };
+const { EmbedBuilder } = require('discord.js');
+
+module.exports = {
+  name: 'remind',
+  description: 'Set a reminder',
+  usage: '<time> <message>',
+  category: 'automation',
+  aliases: ['reminder', 'remindme'],
+  cooldown: 5,
+  async execute(message, args, client) {
+    if (args.length < 2) {
+      return message.reply('❌ Usage: `!remind <time> <message>`\nExample: `!remind 1h Take a break`');
+    }
+
+    const timeString = args[0];
+    const reminderText = args.slice(1).join(' ');
+
+    // Parse time (simple implementation)
+    let ms = 0;
+    if (timeString.includes('s')) ms = parseInt(timeString) * 1000;
+    else if (timeString.includes('m')) ms = parseInt(timeString) * 60000;
+    else if (timeString.includes('h')) ms = parseInt(timeString) * 3600000;
+    else if (timeString.includes('d')) ms = parseInt(timeString) * 86400000;
+    else {
+      return message.reply('❌ Invalid time format! Use: `1s`, `5m`, `2h`, `1d`');
+    }
+
+    if (ms < 5000 || ms > 604800000) { // 5 seconds to 7 days
+      return message.reply('❌ Reminder time must be between 5 seconds and 7 days!');
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor('#00ff00')
+      .setTitle('⏰ Reminder Set!')
+      .setDescription(`I'll remind you in **${timeString}** about: ${reminderText}`)
+      .addFields(
+        { name: 'Reminder Time', value: `<t:${Math.floor((Date.now() + ms) / 1000)}:F>`, inline: true },
+        { name: 'In Channel', value: message.channel.toString(), inline: true }
+      )
+      .setTimestamp();
+
+    message.reply({ embeds: [embed] });
+
+    // Set the reminder
+    setTimeout(() => {
+      const reminderEmbed = new EmbedBuilder()
+        .setColor('#ffd700')
+        .setTitle('🔔 Reminder!')
+        .setDescription(reminderText)
+        .setFooter({ text: `Reminder set ${timeString} ago` })
+        .setTimestamp();
+
+      message.reply({ content: `<@${message.author.id}>`, embeds: [reminderEmbed] });
+    }, ms);
+  }
+};

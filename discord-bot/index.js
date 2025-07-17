@@ -75,27 +75,39 @@ client.database = {
 
 // Load command handlers
 const loadCommands = () => {
-  const commandFolders = fs.readdirSync('./commands');
-  
-  for (const folder of commandFolders) {
-    const commandFiles = fs.readdirSync(`./commands/${folder}`).filter(file => file.endsWith('.js'));
+  const loadCommandsFromFolder = (folderPath) => {
+    const items = fs.readdirSync(folderPath);
     
-    for (const file of commandFiles) {
-      const command = require(`./commands/${folder}/${file}`);
+    for (const item of items) {
+      const itemPath = path.join(folderPath, item);
+      const stats = fs.statSync(itemPath);
       
-      if (command.name) {
-        client.commands.set(command.name, command);
-        
-        if (command.aliases && Array.isArray(command.aliases)) {
-          command.aliases.forEach(alias => {
-            client.aliases.set(alias, command.name);
-          });
+      if (stats.isDirectory()) {
+        // Recursively load commands from subdirectories
+        loadCommandsFromFolder(itemPath);
+      } else if (item.endsWith('.js')) {
+        try {
+          const command = require(path.resolve(itemPath));
+          
+          if (command.name) {
+            client.commands.set(command.name, command);
+            
+            if (command.aliases && Array.isArray(command.aliases)) {
+              command.aliases.forEach(alias => {
+                client.aliases.set(alias, command.name);
+              });
+            }
+            
+            console.log(`✅ Loaded command: ${command.name}`);
+          }
+        } catch (error) {
+          console.error(`❌ Error loading command ${item}:`, error);
         }
-        
-        console.log(`✅ Loaded command: ${command.name}`);
       }
     }
-  }
+  };
+  
+  loadCommandsFromFolder('./commands');
 };
 
 // Load event handlers
