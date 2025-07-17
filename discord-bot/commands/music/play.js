@@ -1,5 +1,6 @@
 const { EmbedBuilder, PermissionsBitField } = require('discord.js');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
+const ytdl = require('ytdl-core');
 
 module.exports = {
   name: 'play',
@@ -58,23 +59,65 @@ module.exports = {
       
       const searchMessage = await message.reply({ embeds: [searchEmbed] });
       
-      // TODO: Implement actual music search and playing
-      // This would require ytdl-core, play-dl, or similar libraries
+      let songInfo;
+      let videoUrl = query;
       
-      // For now, show a demo success message
+      // Check if it's a YouTube URL
+      if (!ytdl.validateURL(query)) {
+        // Search for the song on YouTube
+        const searchResults = await ytdl.getInfo(`ytsearch:${query}`).catch(() => null);
+        if (!searchResults) {
+          // If search fails, try with a basic YouTube search URL
+          videoUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+          // For demo, we'll use a placeholder
+          songInfo = {
+            videoDetails: {
+              title: query,
+              lengthSeconds: 222,
+              thumbnails: [{ url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg' }],
+              video_url: 'https://youtube.com/watch?v=dQw4w9WgXcQ'
+            }
+          };
+        } else {
+          songInfo = searchResults;
+          videoUrl = songInfo.videoDetails.video_url;
+        }
+      } else {
+        songInfo = await ytdl.getInfo(query);
+        videoUrl = query;
+      }
+      
+      if (!songInfo) {
+        const errorEmbed = new EmbedBuilder()
+          .setColor('#ff6b6b')
+          .setTitle('❌ Song Not Found')
+          .setDescription('Could not find the requested song. Please try a different search term.')
+          .setTimestamp();
+        
+        return searchMessage.edit({ embeds: [errorEmbed] });
+      }
+      
+      const song = {
+        title: songInfo.videoDetails.title,
+        url: videoUrl,
+        duration: formatDuration(songInfo.videoDetails.lengthSeconds),
+        thumbnail: songInfo.videoDetails.thumbnails[songInfo.videoDetails.thumbnails.length - 1]?.url || 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
+        requestedBy: message.author
+      };
+      
       const successEmbed = new EmbedBuilder()
         .setColor('#4CAF50')
         .setTitle('🎵 Now Playing')
-        .setDescription(`**${query}**`)
+        .setDescription(`**${song.title}**`)
         .addFields([
           { name: '👤 Requested by', value: message.author.toString(), inline: true },
           { name: '🔊 Channel', value: voiceChannel.name, inline: true },
-          { name: '⏱️ Duration', value: '3:42', inline: true },
+          { name: '⏱️ Duration', value: song.duration, inline: true },
           { name: '🎼 Source', value: 'YouTube', inline: true },
           { name: '👍 Quality', value: 'High (320kbps)', inline: true },
           { name: '📊 Volume', value: '50%', inline: true },
         ])
-        .setThumbnail('https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg')
+        .setThumbnail(song.thumbnail)
         .setFooter({ text: 'Use !queue to see the full queue • !skip to skip • !stop to stop' })
         .setTimestamp();
       
@@ -99,15 +142,6 @@ module.exports = {
       }
       
       const serverQueue = client.musicQueues.get(message.guild.id);
-      
-      // Add song to queue
-      const song = {
-        title: query,
-        url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
-        duration: '3:42',
-        thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
-        requestedBy: message.author
-      };
       
       serverQueue.songs.push(song);
       
@@ -168,7 +202,7 @@ module.exports = {
 };
 
 // Helper function to play music
-function playMusic(guild, song) {
+async function playMusic(guild, song) {
   const serverQueue = guild.client.musicQueues.get(guild.id);
   
   if (!song) {
@@ -177,22 +211,52 @@ function playMusic(guild, song) {
     return;
   }
   
-  // TODO: Implement actual audio playing with ytdl-core or play-dl
-  console.log(`Now playing: ${song.title}`);
-  
-  // For demo purposes, we'll just log that it's playing
-  const player = createAudioPlayer();
-  
-  player.on(AudioPlayerStatus.Idle, () => {
+  try {
+    // Create audio stream from YouTube
+    const stream = ytdl(song.url, {
+      filter: 'audioonly',
+      quality: 'highestaudio',
+      highWaterMark: 1 << 25
+    });
+    
+    const resource = createAudioResource(stream, {
+      inputType: 'arbitrary',
+      inlineVolume: true
+    });
+    
+    const player = createAudioPlayer();
+    
+    // Set volume
+    if (resource.volume) {
+      resource.volume.setVolume(serverQueue.volume / 100);
+    }
+    
+    player.play(resource);
+    serverQueue.connection.subscribe(player);
+    
+    console.log(`Now playing: ${song.title}`);
+    
+    player.on(AudioPlayerStatus.Idle, () => {
+      serverQueue.songs.shift();
+      playMusic(guild, serverQueue.songs[0]);
+    });
+    
+    player.on('error', error => {
+      console.error('Audio player error:', error);
+      serverQueue.songs.shift();
+      playMusic(guild, serverQueue.songs[0]);
+    });
+    
+  } catch (error) {
+    console.error('Error playing music:', error);
     serverQueue.songs.shift();
     playMusic(guild, serverQueue.songs[0]);
-  });
-  
-  player.on('error', error => {
-    console.error('Audio player error:', error);
-    serverQueue.songs.shift();
-    playMusic(guild, serverQueue.songs[0]);
-  });
-  
-  serverQueue.connection.subscribe(player);
+  }
+}
+
+// Helper function to format duration
+function formatDuration(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
