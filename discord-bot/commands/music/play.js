@@ -84,7 +84,7 @@ module.exports = {
         }
         
         songInfo = searchResults[0];
-        videoUrl = songInfo.url;
+        videoUrl = songInfo.url || songInfo.video_details?.url;
       } else {
         // It's a valid YouTube URL, get video info
         songInfo = await play.video_info(query);
@@ -103,7 +103,7 @@ module.exports = {
       
       const song = {
         title: songInfo.title || songInfo.video_details?.title,
-        url: songInfo.url || videoUrl,
+        url: videoUrl || songInfo.url || songInfo.video_details?.url,
         duration: formatDuration(songInfo.durationInSec || songInfo.video_details?.lengthSeconds || 0),
         thumbnail: songInfo.thumbnails?.[0]?.url || songInfo.video_details?.thumbnails?.[songInfo.video_details?.thumbnails?.length - 1]?.url || 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
         requestedBy: message.author
@@ -219,10 +219,19 @@ async function playMusic(guild, song) {
     // Validate song URL before streaming
     if (!song.url) {
       console.error('Song URL is undefined:', song);
+      const errorEmbed = new EmbedBuilder()
+        .setColor('#ff6b6b')
+        .setTitle('❌ Playback Error')
+        .setDescription('Could not get a valid URL for this song. Skipping to next song.')
+        .setTimestamp();
+      
+      serverQueue.textChannel.send({ embeds: [errorEmbed] });
       serverQueue.songs.shift();
       playMusic(guild, serverQueue.songs[0]);
       return;
     }
+    
+    console.log('Attempting to play:', song.url);
     
     // Create audio stream using play-dl
     const stream = await play.stream(song.url, {
