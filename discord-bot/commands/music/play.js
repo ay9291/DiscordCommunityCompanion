@@ -63,8 +63,10 @@ module.exports = {
       let songInfo;
       let videoUrl = query;
       
-      // Check if it's a YouTube URL
-      if (!play.yt_validate(query)) {
+      // Check if it's a direct YouTube URL
+      const isYouTubeUrl = play.yt_validate(query) === 'video';
+      
+      if (!isYouTubeUrl) {
         // Search for the song on YouTube
         const searchResults = await play.search(query, {
           limit: 1,
