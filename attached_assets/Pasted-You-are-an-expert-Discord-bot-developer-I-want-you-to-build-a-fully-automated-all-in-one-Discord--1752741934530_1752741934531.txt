@@ -1,0 +1,111 @@
+You are an expert Discord bot developer. I want you to build a **fully automated all-in-one Discord bot** for an NSFW community server themed around **Indian exhibitionism, seller-voyeur interaction, sugar babies, sugar daddies, and couple content**. 
+
+This bot should manage **everything in the server**, with deep automation and full modularity. Here's the detailed breakdown of features and expectations:
+
+---
+
+🧠 **Core Bot Framework**:
+- Use **discord.py** with **cogs/modular command structure**.
+- Store user data and role permissions in **JSON or MongoDB**.
+- Create command, event, and utility folders.
+
+---
+
+🔐 **Verification System**:
+- !verify [seller | sugarbaby | couple] — triggers a DM-based flow.
+- DM user to upload ID + paper verification (write name + date on paper).
+- Store file link + userID in a verification queue channel.
+- Optional: Write function `analyze_verification_image()` (use AI in future to auto-check if name/date present).
+- Admins manually approve or reject via `!approve @user` or `!reject @user`.
+
+---
+
+🎭 **Role & Access Automation**:
+- Auto-assign verified roles after approval.
+- Assign roles like `@Voyeur`, `@Seller`, `@SugarBaby`, `@Couple`, `@VIP`, `@NSFW Lover` via reaction role panel.
+- Create `!panel setup` command that posts a message with reaction emojis and adds/removes roles accordingly.
+
+---
+
+📸 **Content Posting Bot**:
+- Allow verified sellers to post in specific `#seller-content`, `#couples-zone`, etc.
+- Use cooldowns (1 post per hour) to prevent spam.
+- Auto-tag their post with their role + username.
+- Auto-delete messages with Telegram handles unless verified.
+
+---
+
+🛍️ **Selling System**:
+- `!sell [caption]` — bot auto-generates a post embed with caption, user tag, price info.
+- Optional: Link payment methods (manual or link-based).
+- Show buyer instructions in DM.
+- Future support for Gumroad or Ko-fi integration.
+
+---
+
+🆘 **Moderation & Auto-Moderation**:
+- !ban, !kick, !mute, !purge, !warn, !infractions
+- Anti-spam, anti-link filter (for unverified users).
+- AI/keyword-based NSFW content scanner (placeholder logic).
+- Auto log bans/mutes to #mod-logs.
+
+---
+
+💬 **AI Assistant (NSFW-themed)**:
+- Create simple AI chat mode (`!chat`) where users can DM bot for NSFW questions.
+- Use OpenAI or GPT-like API (placeholder function).
+- Keep conversations stored per user in simple JSON.
+
+---
+
+📈 **Analytics & Tracking**:
+- Track total members, verified users, active sellers, top content posters.
+- `!stats` command to show weekly/monthly breakdown.
+- Auto DM sellers with tips if inactive for 7+ days.
+
+---
+
+🎟️ **Ticket System**:
+- `!support` — opens private mod ticket channel.
+- `!close` to close tickets.
+- Optional emoji-button based ticket panel.
+
+---
+
+🎉 **Engagement Features**:
+- `!daily` — random rewards (XP, roles, exposure points).
+- Leaderboard of top posters/sellers.
+- Auto welcome messages with onboarding guide.
+
+---
+
+🧰 **Admin/Owner Utilities**:
+- `!setrules`, `!setfaq`, `!broadcast`, `!massdm`, `!shutdown`
+- Owner-only commands for emergency lockdown, announcements.
+- Easy config via `config.json`.
+
+---
+
+💾 **Hosting & Deployment**:
+- Must be able to run on **Replit**, **24/7**, with minimal external dependencies.
+- Use `keep_alive.py` and UptimeRobot if needed.
+- Token hidden via `.env` and `secrets`.
+
+---
+
+🧪 **Advanced/Optional Features (Mark as TODO)**:
+- AI verification of handwritten paper name+date.
+- Content filter for revenge porn or stolen content (flagging system).
+- NSFW Chatbot channel for community use.
+- Partner server promotion with cooldown.
+- Payment verification (via Razorpay, etc.).
+
+---
+
+Your goal is to **code the entire base bot** with placeholders and ready-to-extend features. Structure the project cleanly. Comment each section in code with `# TODO` for missing AI components. Make it modular, secure, and scalable for a growing NSFW server.
+
+---
+
+DO NOT add anything unrelated like music commands, memes, or games. Keep everything tightly focused on managing an **exclusive NSFW content-based community**.
+
+Now begin building the bot.
