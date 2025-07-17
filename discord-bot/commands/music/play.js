@@ -103,7 +103,7 @@ module.exports = {
       
       const song = {
         title: songInfo.title || songInfo.video_details?.title,
-        url: videoUrl,
+        url: songInfo.url || videoUrl,
         duration: formatDuration(songInfo.durationInSec || songInfo.video_details?.lengthSeconds || 0),
         thumbnail: songInfo.thumbnails?.[0]?.url || songInfo.video_details?.thumbnails?.[songInfo.video_details?.thumbnails?.length - 1]?.url || 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
         requestedBy: message.author
@@ -216,6 +216,14 @@ async function playMusic(guild, song) {
   }
   
   try {
+    // Validate song URL before streaming
+    if (!song.url) {
+      console.error('Song URL is undefined:', song);
+      serverQueue.songs.shift();
+      playMusic(guild, serverQueue.songs[0]);
+      return;
+    }
+    
     // Create audio stream using play-dl
     const stream = await play.stream(song.url, {
       quality: 2 // High quality
