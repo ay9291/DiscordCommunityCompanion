@@ -1,7 +1,6 @@
 const { Client, Collection, GatewayIntentBits, Partials } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
 
 // Create Discord client with all intents for maximum functionality
 const client = new Client({
@@ -46,7 +45,7 @@ client.cooldowns = new Collection();
 // Bot configuration
 client.config = {
   prefix: process.env.PREFIX || '!',
-  token: process.env.DISCORD_TOKEN,
+  token: process.env.DISCORD_BOT_TOKEN,
   ownerId: process.env.OWNER_ID || '',
   supportServerId: process.env.SUPPORT_SERVER_ID || '',
   defaultEmbedColor: '#7289da',
