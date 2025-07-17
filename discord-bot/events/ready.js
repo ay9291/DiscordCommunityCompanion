@@ -1,5 +1,7 @@
 const { ActivityType } = require('discord.js');
 
+const { ActivityType } = require('discord.js');
+
 module.exports = {
   name: 'ready',
   once: true,
@@ -37,6 +39,10 @@ module.exports = {
     // Log some stats
     console.log('\n📈 Bot Statistics:');
     console.log(`   Servers: ${client.guilds.cache.size}`);
+    console.log(`   Commands: ${client.commands.size}`);
+    console.log(`   Users: ${client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0)}`);
+    
+    console.log('\n🎯 Bot is fully operational and ready to serve!');.cache.size}`);
     console.log(`   Users: ${client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0)}`);
     console.log(`   Channels: ${client.channels.cache.size}`);
     console.log(`   Commands: ${client.commands.size}`);

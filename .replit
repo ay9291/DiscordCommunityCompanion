@@ -46,3 +46,40 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd discord-bot && npm install && node index.js"
+
+[[workflows.workflow]]
+name = "Setup Bot Environment"
+author = 15880331
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Setting up Discord Bot Environment...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Please add your Discord Bot Token to Replit Secrets:\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"1. Click on the 'Secrets' tab in the left sidebar\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"2. Add a secret with key: DISCORD_BOT_TOKEN\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"3. Add your bot token as the value\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"4. Then run the 'Start Discord Bot' workflow\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Your bot is ready! Just add your token and run it.\""
